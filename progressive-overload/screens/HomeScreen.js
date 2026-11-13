@@ -1,11 +1,27 @@
 
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 
-export default function HomeScreen() {
+export default function HomeScreen({ navigation }) {
+  function startWorkout() {
+    navigation.navigate('Workout');
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Начало</Text>
-      <Text>Добре дошъл в Workout Diary!</Text>
+      <Text style={styles.title}>Дневник прогресивно претоварване</Text>
+
+      <Text style={styles.subtitle}>
+        Готов ли си за следващата тренировка?
+      </Text> 
+
+      <Pressable
+        style={styles.button}
+        onPress={startWorkout}
+      >
+        <Text style={styles.buttonText}>
+          Започни тренировка
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -13,12 +29,29 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    padding: 24,
+    paddingTop: 70,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 30,
+  },
+  button: {
+    backgroundColor: '#2563eb',
+    padding: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
