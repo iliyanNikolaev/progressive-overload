@@ -1,7 +1,19 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Pressable } from 'react-native';
+import {useState} from "react";
 
 export default function App() {
+  
+  const [workoutStarted, setWorkoutStarted] = useState(false);
+
+  function startWorkout() {
+    setWorkoutStarted(true);
+  };
+
+  function finishWorkout() {
+    setWorkoutStarted(false);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Progressive Overload</Text>
@@ -10,21 +22,43 @@ export default function App() {
         Track your progress
       </Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>
-          Последна тренировка
-        </Text>
+      
+      {workoutStarted ? (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            Тренировката е започнала!
+          </Text>
 
-        <Text style={styles.cardText}>
-          Все още нямаш записани тренировки.
-        </Text>
-      </View>
+          <Text style={styles.cardText}>
+            Все още няма добавени упражнения.
+          </Text>
 
-      <View style={styles.button}>
-        <Text style={styles.buttonText}>
-          + Нова тренировка
-        </Text>
-      </View>
+          <Pressable
+            style={styles.button}
+            onPress={finishWorkout}
+          >
+            <Text style={styles.buttonText}>
+              Завърши тренировката
+            </Text>
+          </Pressable>
+        </View>
+      ) : (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            Няма активна тренировка
+          </Text>
+
+          <Pressable
+            style={styles.button}
+            onPress={startWorkout}
+          >
+            <Text style={styles.buttonText}>
+              + Нова тренировка
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
 
       <StatusBar style="dark" />
     </View>
