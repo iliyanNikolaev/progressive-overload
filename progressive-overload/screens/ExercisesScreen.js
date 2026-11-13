@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   View,
@@ -10,63 +10,69 @@ import {
   StyleSheet,
 } from 'react-native';
 
-export default function ExercisesScreen() {
-  const [exercises, setExercises] = useState([
-    { id: '1', name: 'Клек' },
-    { id: '2', name: 'Набирания' },
-    { id: '3', name: 'Кофи' },
-    { id: '4', name: 'Военна преса' },
-  ]);
+import {
+  getExercises,
+  addExercise,
+  updateExercise,
+} from '../database/database';
 
+export default function ExercisesScreen() {
+  const [exercises, setExercises] = useState([]);
   const [exerciseName, setExerciseName] = useState('');
   const [editingId, setEditingId] = useState(null);
 
-  function addExercise() {
+  // Зареждаме упражненията от базата
+  function loadExercises() {
+    const data = getExercises();
+    setExercises(data);
+  }
+
+  useEffect(() => {
+    loadExercises();
+  }, []);
+
+  // Добавяме упражнение
+  function handleAddExercise() {
     const name = exerciseName.trim();
 
     if (name === '') {
       return;
     }
 
-    const newExercise = {
-      id: Date.now().toString(),
-      name: name,
-    };
+    addExercise(name);
 
-    setExercises([...exercises, newExercise]);
     setExerciseName('');
+    loadExercises();
   }
 
+  // Започваме редактиране
   function startEditing(exercise) {
     setEditingId(exercise.id);
     setExerciseName(exercise.name);
   }
 
-  function saveEdit() {
+  // Запазваме редакцията
+  function handleSaveEdit() {
     const name = exerciseName.trim();
 
     if (name === '') {
       return;
     }
 
-    const updatedExercises = exercises.map((exercise) => {
-      if (exercise.id === editingId) {
-        return { ...exercise, name: name };
-      }
+    updateExercise(editingId, name);
 
-      return exercise;
-    });
-
-    setExercises(updatedExercises);
     setEditingId(null);
     setExerciseName('');
+    loadExercises();
   }
 
+  // Отказваме редакцията
   function cancelEditing() {
     setEditingId(null);
     setExerciseName('');
   }
 
+  // Визуализираме едно упражнение
   function renderExercise({ item }) {
     return (
       <View style={styles.exerciseItem}>
@@ -75,7 +81,9 @@ export default function ExercisesScreen() {
         </Text>
 
         <Pressable onPress={() => startEditing(item)}>
-          <Text style={styles.editButton}>Редактирай</Text>
+          <Text style={styles.editButton}>
+            Редактирай
+          </Text>
         </Pressable>
       </View>
     );
@@ -99,17 +107,17 @@ export default function ExercisesScreen() {
       {editingId === null ? (
         <Pressable
           style={styles.button}
-          onPress={addExercise}
+          onPress={handleAddExercise}
         >
           <Text style={styles.buttonText}>
             + Добави упражнение
           </Text>
         </Pressable>
       ) : (
-        <View style={styles.editActions}>
+        <View>
           <Pressable
             style={styles.button}
-            onPress={saveEdit}
+            onPress={handleSaveEdit}
           >
             <Text style={styles.buttonText}>
               Запази промените
@@ -133,7 +141,7 @@ export default function ExercisesScreen() {
 
       <FlatList
         data={exercises}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={renderExercise}
         ListEmptyComponent={
           <Text style={styles.emptyText}>
@@ -180,9 +188,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 15,
-  },
-  editActions: {
-    marginBottom: 10,
   },
   cancelButton: {
     padding: 12,
