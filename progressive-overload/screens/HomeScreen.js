@@ -1,12 +1,19 @@
 
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 
-import { createWorkout } from '../database/database';
+import {
+  createWorkout,
+  getActiveWorkout,
+} from '../database/database';
 
 export default function HomeScreen({ navigation }) {
 
   function startWorkout() {
-    const workoutId = createWorkout();
+    const activeWorkout = getActiveWorkout();
+
+    const workoutId = activeWorkout
+      ? activeWorkout.id
+      : createWorkout();
 
     navigation.navigate('Workout', {
       workoutId: workoutId,
@@ -17,9 +24,6 @@ export default function HomeScreen({ navigation }) {
     <View style={styles.container}>
       <Text style={styles.title}>Дневник прогресивно претоварване</Text>
 
-      <Text style={styles.subtitle}>
-        Готов ли си за следващата тренировка?
-      </Text>
 
       <Pressable
         style={styles.button}
@@ -45,11 +49,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 12,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 30,
-  },
+
   button: {
     backgroundColor: '#2563eb',
     padding: 18,

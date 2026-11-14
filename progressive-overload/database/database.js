@@ -4,8 +4,7 @@ import * as SQLite from 'expo-sqlite';
 // Отваряме или създаваме базата данни
 export const db = SQLite.openDatabaseSync('workouts.db');
 
-// Създаваме таблицата за упражненията
-
+// Инициализираме базата данни
 export function initializeDatabase() {
   db.execSync(`
     CREATE TABLE IF NOT EXISTS exercises (
@@ -45,21 +44,20 @@ export function initializeDatabase() {
   `);
 
   const workoutColumns = db.getAllSync(
-  'PRAGMA table_info(workouts)'
-);
+    'PRAGMA table_info(workouts)'
+  );
 
-const hasCompletedColumn = workoutColumns.some(
-  (column) => column.name === 'completed'
-);
+  const hasCompletedColumn = workoutColumns.some(
+    (column) => column.name === 'completed'
+  );
 
-if (!hasCompletedColumn) {
-  db.execSync(`
-    ALTER TABLE workouts
-    ADD COLUMN completed INTEGER NOT NULL DEFAULT 0
-  `);
+  if (!hasCompletedColumn) {
+    db.execSync(`
+      ALTER TABLE workouts
+      ADD COLUMN completed INTEGER NOT NULL DEFAULT 0
+    `);
+  }
 }
-}
-
 
 // Взимаме всички упражнения
 export function getExercises() {
@@ -83,7 +81,6 @@ export function updateExercise(id, name) {
     [name, id]
   );
 }
-
 
 // Създаваме нова празна тренировка
 export function createWorkout() {
@@ -114,6 +111,30 @@ export function addExerciseToWorkout(workoutId, exerciseId) {
   return result.lastInsertRowId;
 }
 
+// Изтриваме упражнение от конкретна тренировка
+export function deleteExerciseFromWorkout(workoutExerciseId) {
+  db.execSync('BEGIN TRANSACTION');
+
+  try {
+    // Първо изтриваме сериите към упражнението
+    db.runSync(
+      'DELETE FROM sets WHERE workout_exercise_id = ?',
+      [workoutExerciseId]
+    );
+
+    // След това изтриваме упражнението от тренировката
+    db.runSync(
+      'DELETE FROM workout_exercises WHERE id = ?',
+      [workoutExerciseId]
+    );
+
+    db.execSync('COMMIT');
+  } catch (error) {
+    db.execSync('ROLLBACK');
+    throw error;
+  }
+}
+
 // Взимаме упражненията в конкретна тренировка
 export function getWorkoutExercises(workoutId) {
   return db.getAllSync(
@@ -140,9 +161,8 @@ export function addSet(workoutExerciseId, setNumber, reps, weight) {
   );
 }
 
-
-// Взимаме сериите от последната тренировка,
-// в която е участвало дадено упражнение
+// Взимаме предишните резултати
+// Само от приключени тренировки със записани серии
 export function getLastExercisePerformance(exerciseId, currentWorkoutId) {
   return db.getAllSync(
     `SELECT
@@ -156,13 +176,17 @@ export function getLastExercisePerformance(exerciseId, currentWorkoutId) {
     JOIN sets
       ON sets.workout_exercise_id = workout_exercises.id
     WHERE workout_exercises.exercise_id = ?
+      AND workouts.completed = 1
       AND workouts.id = (
         SELECT workouts.id
         FROM workout_exercises
         JOIN workouts
           ON workouts.id = workout_exercises.workout_id
+        JOIN sets
+          ON sets.workout_exercise_id = workout_exercises.id
         WHERE workout_exercises.exercise_id = ?
           AND workouts.id != ?
+          AND workouts.completed = 1
         ORDER BY workouts.date DESC, workouts.id DESC
         LIMIT 1
       )
@@ -170,7 +194,6 @@ export function getLastExercisePerformance(exerciseId, currentWorkoutId) {
     [exerciseId, exerciseId, currentWorkoutId]
   );
 }
-
 
 // Взимаме всички записани серии за упражнение
 export function getWorkoutSets(workoutExerciseId) {
@@ -183,6 +206,20 @@ export function getWorkoutSets(workoutExerciseId) {
   );
 }
 
+// Проверяваме общия брой серии в конкретна тренировка
+export function getWorkoutSetCount(workoutId) {
+  const result = db.getFirstSync(
+    `SELECT COUNT(sets.id) AS total
+     FROM workout_exercises
+     LEFT JOIN sets
+       ON sets.workout_exercise_id = workout_exercises.id
+     WHERE workout_exercises.workout_id = ?`,
+    [workoutId]
+  );
+
+  return result.total;
+}
+
 // Редактираме вече записана серия
 export function updateSet(id, reps, weight) {
   db.runSync(
@@ -193,6 +230,7 @@ export function updateSet(id, reps, weight) {
   );
 }
 
+// Изтриваме серия и преномерираме останалите
 export function deleteSet(id, workoutExerciseId, setNumber) {
   db.runSync(
     'DELETE FROM sets WHERE id = ?',
@@ -224,4 +262,24 @@ export function getWorkoutHistory() {
      WHERE completed = 1
      ORDER BY date DESC, id DESC`
   );
+}
+
+// Взимаме последната незавършена тренировка
+export function getActiveWorkout() {
+  return db.getFirstSync(
+    `SELECT *
+     FROM workouts
+     WHERE completed = 0
+     ORDER BY id DESC
+     LIMIT 1`
+  );
+}
+
+// Изчистваме тестовите тренировки
+export function clearTestWorkouts() {
+  db.execSync(`
+    DELETE FROM sets;
+    DELETE FROM workout_exercises;
+    DELETE FROM workouts;
+  `);
 }

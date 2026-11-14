@@ -4,17 +4,19 @@ import { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  FlatList,
   Pressable,
   StyleSheet,
   Alert,
 } from 'react-native';
+
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 import {
   getExercises,
   getWorkoutExercises,
   addExerciseToWorkout,
   getLastExercisePerformance,
+  getWorkoutSetCount,
   finishWorkout,
 } from '../database/database';
 
@@ -54,11 +56,25 @@ export default function WorkoutScreen({ route, navigation }) {
     setShowExerciseList(false);
   }
 
+  function handleExerciseDeleted() {
+    loadData();
+  }
+
   function handleFinishWorkout() {
     if (workoutExercises.length === 0) {
       Alert.alert(
         'Няма упражнения',
         'Добави поне едно упражнение преди да приключиш тренировката.'
+      );
+      return;
+    }
+
+    const totalSets = getWorkoutSetCount(workoutId);
+
+    if (totalSets === 0) {
+      Alert.alert(
+        'Няма записани серии',
+        'Запиши поне една серия преди да приключиш тренировката.'
       );
       return;
     }
@@ -85,7 +101,7 @@ export default function WorkoutScreen({ route, navigation }) {
     );
   }
 
-  function renderWorkoutExercise({ item }) {
+  function renderWorkoutExercise(item) {
     const previousSets = getLastExercisePerformance(
       item.exercise_id,
       workoutId
@@ -93,105 +109,116 @@ export default function WorkoutScreen({ route, navigation }) {
 
     return (
       <WorkoutExerciseCard
+        key={item.id}
         item={item}
         previousSets={previousSets}
+        onExerciseDeleted={handleExerciseDeleted}
       />
     );
   }
 
   return (
     <View style={styles.container}>
-
-      <Text style={styles.title}>
-        Текуща тренировка
-      </Text>
-
-      <Pressable
-        style={styles.addExerciseButton}
-        onPress={() => setShowExerciseList(!showExerciseList)}
+      <KeyboardAwareScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        extraScrollHeight={30}
+        extraHeight={100}
+        keyboardShouldPersistTaps="handled"
+        keyboardOpeningTime={0}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.addExerciseButtonText}>
-          {showExerciseList
-            ? 'Затвори списъка'
-            : '+ Добави упражнение'}
-        </Text>
-      </Pressable>
+        <Text style={styles.title}>Текуща тренировка</Text>
 
-      {showExerciseList && (
-        <View style={styles.exerciseList}>
-
-          <Text style={styles.sectionTitle}>
-            Избери упражнение
+        <Pressable
+          style={styles.addExerciseButton}
+          onPress={() => setShowExerciseList(!showExerciseList)}
+        >
+          <Text style={styles.addExerciseButtonText}>
+            {showExerciseList
+              ? 'Затвори списъка'
+              : '+ Добави упражнение'}
           </Text>
+        </Pressable>
 
-          {exercises.length === 0 ? (
-            <Text style={styles.emptyText}>
-              Все още нямаш добавени упражнения в каталога.
+        {showExerciseList && (
+          <View style={styles.exerciseList}>
+            <Text style={styles.sectionTitle}>
+              Избери упражнение
             </Text>
-          ) : (
-            exercises.map((exercise) => {
-              const alreadyAdded = workoutExercises.some(
-                (item) => item.exercise_id === exercise.id
-              );
 
-              return (
-                <Pressable
-                  key={exercise.id}
-                  style={[
-                    styles.exerciseOption,
-                    alreadyAdded && styles.disabledExercise,
-                  ]}
-                  onPress={() => handleAddExercise(exercise)}
-                  disabled={alreadyAdded}
-                >
-                  <Text style={styles.exerciseOptionText}>
-                    {exercise.name}
-                  </Text>
+            {exercises.length === 0 ? (
+              <Text style={styles.emptyText}>
+                Все още нямаш добавени упражнения в каталога.
+              </Text>
+            ) : (
+              exercises.map((exercise) => {
+                const alreadyAdded = workoutExercises.some(
+                  (item) => item.exercise_id === exercise.id
+                );
 
-                  {alreadyAdded && (
-                    <Text style={styles.addedText}>
-                      Добавено
+                return (
+                  <Pressable
+                    key={exercise.id}
+                    style={[
+                      styles.exerciseOption,
+                      alreadyAdded && styles.disabledExercise,
+                    ]}
+                    onPress={() => handleAddExercise(exercise)}
+                    disabled={alreadyAdded}
+                  >
+                    <Text style={styles.exerciseOptionText}>
+                      {exercise.name}
                     </Text>
-                  )}
-                </Pressable>
-              );
-            })
-          )}
 
-        </View>
-      )}
+                    {alreadyAdded && (
+                      <Text style={styles.addedText}>
+                        Добавено
+                      </Text>
+                    )}
+                  </Pressable>
+                );
+              })
+            )}
+          </View>
+        )}
 
-      <FlatList
-        data={workoutExercises}
-        keyExtractor={(item) => String(item.id)}
-        renderItem={renderWorkoutExercise}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
+        {workoutExercises.length === 0 ? (
           <Text style={styles.emptyText}>
             Все още няма добавени упражнения.
           </Text>
-        }
-      />
+        ) : (
+          workoutExercises.map(renderWorkoutExercise)
+        )}
 
-      <Pressable
-        style={styles.finishButton}
-        onPress={handleFinishWorkout}
-      >
-        <Text style={styles.finishButtonText}>
-          Приключи тренировка
-        </Text>
-      </Pressable>
-
+        <Pressable
+          style={styles.finishButton}
+          onPress={handleFinishWorkout}
+        >
+          <Text style={styles.finishButtonText}>
+            Приключи тренировка
+          </Text>
+        </Pressable>
+      </KeyboardAwareScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     backgroundColor: '#f3f4f6',
+  },
+
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
     padding: 16,
+    paddingBottom: 40,
   },
 
   title: {
@@ -253,14 +280,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  listContent: {
-    paddingBottom: 20,
-  },
-
   emptyText: {
     color: '#6b7280',
     textAlign: 'center',
     marginTop: 20,
+    marginBottom: 20,
   },
 
   finishButton: {
@@ -276,5 +300,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-
 });

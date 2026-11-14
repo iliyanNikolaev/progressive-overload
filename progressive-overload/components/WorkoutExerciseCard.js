@@ -15,9 +15,14 @@ import {
   getWorkoutSets,
   updateSet,
   deleteSet,
+  deleteExerciseFromWorkout,
 } from '../database/database';
 
-export default function WorkoutExerciseCard({ item, previousSets }) {
+export default function WorkoutExerciseCard({
+  item,
+  previousSets,
+  onExerciseDeleted,
+}) {
   const [sets, setSets] = useState([]);
 
   const [reps, setReps] = useState('');
@@ -27,7 +32,6 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
   const [editReps, setEditReps] = useState('');
   const [editWeight, setEditWeight] = useState('');
 
-  // Зареждаме сериите от базата данни
   function loadSets() {
     const data = getWorkoutSets(item.id);
     setSets(data);
@@ -37,7 +41,6 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
     loadSets();
   }, [item.id]);
 
-  // Добавяне на нова серия
   function handleAddSet() {
     const parsedReps = Number(reps);
     const parsedWeight = Number(weight.replace(',', '.'));
@@ -70,21 +73,18 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
     loadSets();
   }
 
-  // Започване на редакция
   function startEditing(set) {
     setEditingSetId(set.id);
     setEditReps(String(set.reps));
     setEditWeight(String(set.weight));
   }
 
-  // Отказ от редакция
   function cancelEditing() {
     setEditingSetId(null);
     setEditReps('');
     setEditWeight('');
   }
 
-  // Запазване на редакцията
   function saveEditing() {
     const parsedReps = Number(editReps);
     const parsedWeight = Number(
@@ -114,7 +114,6 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
     loadSets();
   }
 
-  // Изтриване на серия с потвърждение
   function handleDeleteSet(set) {
     Alert.alert(
       'Изтриване на серия',
@@ -141,15 +140,43 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
     );
   }
 
+  function handleDeleteExercise() {
+    Alert.alert(
+      'Изтриване на упражнение',
+      `Сигурен ли си, че искаш да премахнеш "${item.name}" от тази тренировка?`,
+      [
+        {
+          text: 'Отказ',
+          style: 'cancel',
+        },
+        {
+          text: 'Изтрий',
+          style: 'destructive',
+          onPress: () => {
+            deleteExerciseFromWorkout(item.id);
+            onExerciseDeleted();
+          },
+        },
+      ]
+    );
+  }
+
+  function handleWeightFocus() {
+    if (weight === '0') {
+      setWeight('');
+    }
+  }
+
+  function handleEditWeightFocus() {
+    if (editWeight === '0') {
+      setEditWeight('');
+    }
+  }
+
   return (
     <View style={styles.card}>
+      <Text style={styles.exerciseName}>{item.name}</Text>
 
-      {/* Име на упражнението */}
-      <Text style={styles.exerciseName}>
-        {item.name}
-      </Text>
-
-      {/* Предишни резултати */}
       <View style={styles.previousContainer}>
         <Text style={styles.previousTitle}>
           Предишна тренировка
@@ -171,19 +198,12 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
         )}
       </View>
 
-      {/* Текущи серии */}
-      <Text style={styles.sectionTitle}>
-        Текущи серии
-      </Text>
+      <Text style={styles.sectionTitle}>Текущи серии</Text>
 
       {sets.map((set) => (
         <View key={set.id} style={styles.savedSet}>
-
           {editingSetId === set.id ? (
-
-            // Режим редакция
             <View style={styles.editContainer}>
-
               <Text style={styles.setNumber}>
                 Серия {set.set_number}
               </Text>
@@ -201,6 +221,7 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
                   style={styles.editInput}
                   value={editWeight}
                   onChangeText={setEditWeight}
+                  onFocus={handleEditWeightFocus}
                   keyboardType="decimal-pad"
                   placeholder="Кг"
                 />
@@ -225,12 +246,8 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
                   </Text>
                 </Pressable>
               </View>
-
             </View>
-
           ) : (
-
-            // Нормален режим
             <>
               <Text style={styles.setNumber}>
                 {set.set_number}
@@ -244,34 +261,25 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
                 {set.weight} кг
               </Text>
 
-              <Pressable
-                onPress={() => startEditing(set)}
-              >
+              <Pressable onPress={() => startEditing(set)}>
                 <Text style={styles.editButton}>
                   Редактирай
                 </Text>
               </Pressable>
 
-              <Pressable
-                onPress={() => handleDeleteSet(set)}
-              >
+              <Pressable onPress={() => handleDeleteSet(set)}>
                 <Text style={styles.deleteButton}>
                   Изтрий
                 </Text>
               </Pressable>
             </>
           )}
-
         </View>
       ))}
 
-      {/* Добавяне на нова серия */}
       <View style={styles.inputRow}>
-
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>
-            Повторения
-          </Text>
+          <Text style={styles.inputLabel}>Повторения</Text>
 
           <TextInput
             style={styles.input}
@@ -283,19 +291,17 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>
-            Тежест (кг)
-          </Text>
+          <Text style={styles.inputLabel}>Тежест (кг)</Text>
 
           <TextInput
             style={styles.input}
             value={weight}
             onChangeText={setWeight}
+            onFocus={handleWeightFocus}
             keyboardType="decimal-pad"
             placeholder="0"
           />
         </View>
-
       </View>
 
       <Pressable
@@ -307,12 +313,19 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
         </Text>
       </Pressable>
 
+      <Pressable
+        style={styles.deleteExerciseButton}
+        onPress={handleDeleteExercise}
+      >
+        <Text style={styles.deleteExerciseButtonText}>
+          Изтрий упражнението
+        </Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-
   card: {
     backgroundColor: '#ffffff',
     padding: 16,
@@ -463,5 +476,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-});
+  deleteExerciseButton: {
+    backgroundColor: '#fee2e2',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
 
+  deleteExerciseButtonText: {
+    color: '#dc2626',
+    fontWeight: '600',
+  },
+});
