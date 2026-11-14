@@ -9,6 +9,8 @@ import {
   StyleSheet,
 } from 'react-native';
 
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { useFocusEffect } from '@react-navigation/native';
 
 import {
@@ -20,26 +22,26 @@ import {
 export default function HistoryScreen({ navigation }) {
   const [workouts, setWorkouts] = useState([]);
 
-function loadHistory() {
-  const history = getWorkoutHistory() || [];
+  function loadHistory() {
+    const history = getWorkoutHistory() || [];
 
-  const detailedHistory = history.map((workout) => {
-    const exercises = getWorkoutExercises(workout.id) || [];
+    const detailedHistory = history.map((workout) => {
+      const exercises = getWorkoutExercises(workout.id) || [];
 
-    const totalSets = exercises.reduce((total, exercise) => {
-      const sets = getWorkoutSets(exercise.id) || [];
-      return total + sets.length;
-    }, 0);
+      const totalSets = exercises.reduce((total, exercise) => {
+        const sets = getWorkoutSets(exercise.id) || [];
+        return total + sets.length;
+      }, 0);
 
-    return {
-      ...workout,
-      exercises,
-      totalSets,
-    };
-  });
+      return {
+        ...workout,
+        exercises,
+        totalSets,
+      };
+    });
 
-  setWorkouts(detailedHistory);
-}
+    setWorkouts(detailedHistory);
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -103,7 +105,7 @@ function loadHistory() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <Text style={styles.title}>История</Text>
 
       <FlatList
@@ -117,7 +119,7 @@ function loadHistory() {
           </Text>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -125,65 +127,78 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f3f4f6',
-    padding: 16,
+    paddingHorizontal: 16,
   },
+
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#111827',
     marginBottom: 16,
+    marginTop: 8,
   },
+
   workoutCard: {
     backgroundColor: '#ffffff',
     padding: 16,
     borderRadius: 12,
     marginBottom: 14,
   },
+
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+
   workoutTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#111827',
   },
+
   completedLabel: {
     color: '#16a34a',
     fontSize: 12,
     fontWeight: '600',
   },
+
   workoutDate: {
     fontSize: 14,
     color: '#6b7280',
     marginTop: 6,
   },
+
   statsRow: {
     flexDirection: 'row',
     gap: 16,
     marginTop: 16,
   },
+
   statText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#374151',
   },
+
   exerciseNames: {
     fontSize: 13,
     color: '#6b7280',
     marginTop: 12,
     lineHeight: 20,
   },
+
   detailsText: {
     fontSize: 13,
     color: '#2563eb',
     marginTop: 14,
     fontWeight: '600',
   },
+
   listContent: {
     paddingBottom: 20,
   },
+
   emptyText: {
     textAlign: 'center',
     color: '#6b7280',
