@@ -1,9 +1,16 @@
 
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 
+import { createWorkout } from '../database/database';
+
 export default function HomeScreen({ navigation }) {
+
   function startWorkout() {
-    navigation.navigate('Workout');
+    const workoutId = createWorkout();
+
+    navigation.navigate('Workout', {
+      workoutId: workoutId,
+    });
   }
 
   return (
@@ -12,7 +19,7 @@ export default function HomeScreen({ navigation }) {
 
       <Text style={styles.subtitle}>
         Готов ли си за следващата тренировка?
-      </Text> 
+      </Text>
 
       <Pressable
         style={styles.button}

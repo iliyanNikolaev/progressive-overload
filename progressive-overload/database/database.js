@@ -5,14 +5,46 @@ import * as SQLite from 'expo-sqlite';
 export const db = SQLite.openDatabaseSync('workouts.db');
 
 // Създаваме таблицата за упражненията
+
 export function initializeDatabase() {
   db.execSync(`
     CREATE TABLE IF NOT EXISTS exercises (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS workouts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS workout_exercises (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      workout_id INTEGER NOT NULL,
+      exercise_id INTEGER NOT NULL,
+
+      FOREIGN KEY (workout_id)
+        REFERENCES workouts(id)
+        ON DELETE CASCADE,
+
+      FOREIGN KEY (exercise_id)
+        REFERENCES exercises(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS sets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      workout_exercise_id INTEGER NOT NULL,
+      set_number INTEGER NOT NULL,
+      reps INTEGER NOT NULL,
+      weight REAL NOT NULL DEFAULT 0,
+
+      FOREIGN KEY (workout_exercise_id)
+        REFERENCES workout_exercises(id)
+        ON DELETE CASCADE
+    );
   `);
 }
+
 
 // Взимаме всички упражнения
 export function getExercises() {
@@ -34,5 +66,61 @@ export function updateExercise(id, name) {
   db.runSync(
     'UPDATE exercises SET name = ? WHERE id = ?',
     [name, id]
+  );
+}
+
+
+// Създаваме нова празна тренировка
+export function createWorkout() {
+  const result = db.runSync(
+    'INSERT INTO workouts DEFAULT VALUES'
+  );
+
+  return result.lastInsertRowId;
+}
+
+// Взимаме конкретна тренировка
+export function getWorkout(workoutId) {
+  return db.getFirstSync(
+    'SELECT * FROM workouts WHERE id = ?',
+    [workoutId]
+  );
+}
+
+// Добавяме упражнение към тренировка
+export function addExerciseToWorkout(workoutId, exerciseId) {
+  const result = db.runSync(
+    `INSERT INTO workout_exercises
+      (workout_id, exercise_id)
+     VALUES (?, ?)`,
+    [workoutId, exerciseId]
+  );
+
+  return result.lastInsertRowId;
+}
+
+// Взимаме упражненията в конкретна тренировка
+export function getWorkoutExercises(workoutId) {
+  return db.getAllSync(
+    `SELECT
+      workout_exercises.id,
+      exercises.name,
+      exercises.id AS exercise_id
+    FROM workout_exercises
+    JOIN exercises
+      ON exercises.id = workout_exercises.exercise_id
+    WHERE workout_exercises.workout_id = ?
+    ORDER BY workout_exercises.id ASC`,
+    [workoutId]
+  );
+}
+
+// Добавяме серия към упражнение
+export function addSet(workoutExerciseId, setNumber, reps, weight) {
+  db.runSync(
+    `INSERT INTO sets
+      (workout_exercise_id, set_number, reps, weight)
+     VALUES (?, ?, ?, ?)`,
+    [workoutExerciseId, setNumber, reps, weight]
   );
 }
