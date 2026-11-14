@@ -124,3 +124,56 @@ export function addSet(workoutExerciseId, setNumber, reps, weight) {
     [workoutExerciseId, setNumber, reps, weight]
   );
 }
+
+
+// Взимаме сериите от последната тренировка,
+// в която е участвало дадено упражнение
+export function getLastExercisePerformance(exerciseId, currentWorkoutId) {
+  return db.getAllSync(
+    `SELECT
+      workouts.date,
+      sets.set_number,
+      sets.reps,
+      sets.weight
+    FROM workout_exercises
+    JOIN workouts
+      ON workouts.id = workout_exercises.workout_id
+    JOIN sets
+      ON sets.workout_exercise_id = workout_exercises.id
+    WHERE workout_exercises.exercise_id = ?
+      AND workouts.id = (
+        SELECT workouts.id
+        FROM workout_exercises
+        JOIN workouts
+          ON workouts.id = workout_exercises.workout_id
+        WHERE workout_exercises.exercise_id = ?
+          AND workouts.id != ?
+        ORDER BY workouts.date DESC, workouts.id DESC
+        LIMIT 1
+      )
+    ORDER BY sets.set_number ASC`,
+    [exerciseId, exerciseId, currentWorkoutId]
+  );
+}
+
+
+// Взимаме всички записани серии за упражнение
+export function getWorkoutSets(workoutExerciseId) {
+  return db.getAllSync(
+    `SELECT *
+     FROM sets
+     WHERE workout_exercise_id = ?
+     ORDER BY set_number ASC`,
+    [workoutExerciseId]
+  );
+}
+
+// Редактираме вече записана серия
+export function updateSet(id, reps, weight) {
+  db.runSync(
+    `UPDATE sets
+     SET reps = ?, weight = ?
+     WHERE id = ?`,
+    [reps, weight, id]
+  );
+}
