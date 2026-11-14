@@ -6,6 +6,7 @@ import HomeScreen from '../screens/HomeScreen';
 import ExercisesScreen from '../screens/ExercisesScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import WorkoutScreen from '../screens/WorkoutScreen';
+import WorkoutDetailsScreen from '../screens/WorkoutDetailsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -53,6 +54,12 @@ export default function AppNavigator() {
         component={WorkoutScreen}
         options={{ title: 'Текуща тренировка' }}
       />
+
+      <Stack.Screen
+        name="WorkoutDetails"
+        component={WorkoutDetailsScreen}
+        options={{ title: 'Детайли на тренировката' }}
+    />
     </Stack.Navigator>
   );
 }

@@ -4,38 +4,39 @@ import { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  Pressable,
   FlatList,
+  Pressable,
   StyleSheet,
+  Alert,
 } from 'react-native';
 
 import {
   getExercises,
-  addExerciseToWorkout,
   getWorkoutExercises,
+  addExerciseToWorkout,
   getLastExercisePerformance,
+  finishWorkout,
 } from '../database/database';
 
 import WorkoutExerciseCard from '../components/WorkoutExerciseCard';
 
-export default function WorkoutScreen({ route }) {
+export default function WorkoutScreen({ route, navigation }) {
   const { workoutId } = route.params;
 
   const [exercises, setExercises] = useState([]);
   const [workoutExercises, setWorkoutExercises] = useState([]);
-  const [showCatalog, setShowCatalog] = useState(false);
+  const [showExerciseList, setShowExerciseList] = useState(false);
 
-  function loadExercises() {
-    setExercises(getExercises());
-  }
+  function loadData() {
+    const allExercises = getExercises();
+    const currentExercises = getWorkoutExercises(workoutId);
 
-  function loadWorkoutExercises() {
-    setWorkoutExercises(getWorkoutExercises(workoutId));
+    setExercises(allExercises);
+    setWorkoutExercises(currentExercises);
   }
 
   useEffect(() => {
-    loadExercises();
-    loadWorkoutExercises();
+    loadData();
   }, [workoutId]);
 
   function handleAddExercise(exercise) {
@@ -49,29 +50,38 @@ export default function WorkoutScreen({ route }) {
 
     addExerciseToWorkout(workoutId, exercise.id);
 
-    loadWorkoutExercises();
-    setShowCatalog(false);
+    loadData();
+    setShowExerciseList(false);
   }
 
-  function renderCatalogExercise({ item }) {
-    const alreadyAdded = workoutExercises.some(
-      (exercise) => exercise.exercise_id === item.id
-    );
+  function handleFinishWorkout() {
+    if (workoutExercises.length === 0) {
+      Alert.alert(
+        'Няма упражнения',
+        'Добави поне едно упражнение преди да приключиш тренировката.'
+      );
+      return;
+    }
 
-    return (
-      <Pressable
-        style={styles.catalogItem}
-        onPress={() => handleAddExercise(item)}
-        disabled={alreadyAdded}
-      >
-        <Text style={styles.catalogName}>
-          {item.name}
-        </Text>
+    Alert.alert(
+      'Приключване на тренировка',
+      'Сигурен ли си, че искаш да приключиш тази тренировка?',
+      [
+        {
+          text: 'Отказ',
+          style: 'cancel',
+        },
+        {
+          text: 'Приключи',
+          onPress: () => {
+            finishWorkout(workoutId);
 
-        <Text style={styles.addText}>
-          {alreadyAdded ? 'Добавено' : '+ Добави'}
-        </Text>
-      </Pressable>
+            navigation.navigate('MainTabs', {
+              screen: 'Home',
+            });
+          },
+        },
+      ]
     );
   }
 
@@ -91,110 +101,180 @@ export default function WorkoutScreen({ route }) {
 
   return (
     <View style={styles.container}>
+
       <Text style={styles.title}>
         Текуща тренировка
       </Text>
 
       <Pressable
-        style={styles.addButton}
-        onPress={() => setShowCatalog(!showCatalog)}
+        style={styles.addExerciseButton}
+        onPress={() => setShowExerciseList(!showExerciseList)}
       >
-        <Text style={styles.addButtonText}>
-          {showCatalog ? 'Затвори каталога' : '+ Добави упражнение'}
+        <Text style={styles.addExerciseButtonText}>
+          {showExerciseList
+            ? 'Затвори списъка'
+            : '+ Добави упражнение'}
         </Text>
       </Pressable>
 
-      {showCatalog && (
-        <View style={styles.catalogContainer}>
+      {showExerciseList && (
+        <View style={styles.exerciseList}>
+
           <Text style={styles.sectionTitle}>
             Избери упражнение
           </Text>
 
-          <FlatList
-            data={exercises}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderCatalogExercise}
-            ListEmptyComponent={
-              <Text style={styles.emptyText}>
-                Все още няма упражнения в каталога.
-              </Text>
-            }
-          />
+          {exercises.length === 0 ? (
+            <Text style={styles.emptyText}>
+              Все още нямаш добавени упражнения в каталога.
+            </Text>
+          ) : (
+            exercises.map((exercise) => {
+              const alreadyAdded = workoutExercises.some(
+                (item) => item.exercise_id === exercise.id
+              );
+
+              return (
+                <Pressable
+                  key={exercise.id}
+                  style={[
+                    styles.exerciseOption,
+                    alreadyAdded && styles.disabledExercise,
+                  ]}
+                  onPress={() => handleAddExercise(exercise)}
+                  disabled={alreadyAdded}
+                >
+                  <Text style={styles.exerciseOptionText}>
+                    {exercise.name}
+                  </Text>
+
+                  {alreadyAdded && (
+                    <Text style={styles.addedText}>
+                      Добавено
+                    </Text>
+                  )}
+                </Pressable>
+              );
+            })
+          )}
+
         </View>
       )}
 
-      <Text style={styles.sectionTitle}>
-        Упражнения ({workoutExercises.length})
-      </Text>
-
       <FlatList
         data={workoutExercises}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => String(item.id)}
         renderItem={renderWorkoutExercise}
+        contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <Text style={styles.emptyText}>
-            Тренировката е празна. Добави първото си упражнение.
+            Все още няма добавени упражнения.
           </Text>
         }
       />
+
+      <Pressable
+        style={styles.finishButton}
+        onPress={handleFinishWorkout}
+      >
+        <Text style={styles.finishButtonText}>
+          Приключи тренировка
+        </Text>
+      </Pressable>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 20,
-    paddingTop: 25,
+    backgroundColor: '#f3f4f6',
+    padding: 16,
   },
+
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 16,
+    color: '#111827',
   },
-  addButton: {
+
+  addExerciseButton: {
     backgroundColor: '#2563eb',
-    padding: 15,
+    padding: 14,
     borderRadius: 10,
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  catalogContainer: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 20,
-    maxHeight: 280,
-  },
-  catalogItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  catalogName: {
-    fontSize: 15,
-  },
-  addText: {
-    color: '#2563eb',
+
+  addExerciseButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
     fontWeight: '600',
   },
+
+  exerciseList: {
+    backgroundColor: '#ffffff',
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#111827',
+  },
+
+  exerciseOption: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  exerciseOptionText: {
+    fontSize: 15,
+    color: '#111827',
+  },
+
+  disabledExercise: {
+    opacity: 0.5,
+  },
+
+  addedText: {
+    color: '#16a34a',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  listContent: {
+    paddingBottom: 20,
+  },
+
   emptyText: {
-    color: '#888',
+    color: '#6b7280',
     textAlign: 'center',
     marginTop: 20,
-    marginBottom: 20,
   },
+
+  finishButton: {
+    backgroundColor: '#16a34a',
+    padding: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+
+  finishButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+
 });

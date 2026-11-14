@@ -7,12 +7,14 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
+  Alert,
 } from 'react-native';
 
 import {
   addSet,
   getWorkoutSets,
   updateSet,
+  deleteSet,
 } from '../database/database';
 
 export default function WorkoutExerciseCard({ item, previousSets }) {
@@ -25,6 +27,7 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
   const [editReps, setEditReps] = useState('');
   const [editWeight, setEditWeight] = useState('');
 
+  // Зареждаме сериите от базата данни
   function loadSets() {
     const data = getWorkoutSets(item.id);
     setSets(data);
@@ -45,6 +48,10 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
       !Number.isFinite(parsedWeight) ||
       parsedWeight < 0
     ) {
+      Alert.alert(
+        'Невалидни данни',
+        'Въведи валиден брой повторения и тежест.'
+      );
       return;
     }
 
@@ -90,6 +97,10 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
       !Number.isFinite(parsedWeight) ||
       parsedWeight < 0
     ) {
+      Alert.alert(
+        'Невалидни данни',
+        'Въведи валиден брой повторения и тежест.'
+      );
       return;
     }
 
@@ -101,6 +112,33 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
 
     cancelEditing();
     loadSets();
+  }
+
+  // Изтриване на серия с потвърждение
+  function handleDeleteSet(set) {
+    Alert.alert(
+      'Изтриване на серия',
+      `Сигурен ли си, че искаш да изтриеш серия ${set.set_number}?`,
+      [
+        {
+          text: 'Отказ',
+          style: 'cancel',
+        },
+        {
+          text: 'Изтрий',
+          style: 'destructive',
+          onPress: () => {
+            deleteSet(
+              set.id,
+              item.id,
+              set.set_number
+            );
+
+            loadSets();
+          },
+        },
+      ]
+    );
   }
 
   return (
@@ -169,7 +207,6 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
               </View>
 
               <View style={styles.editActions}>
-
                 <Pressable
                   style={styles.saveButton}
                   onPress={saveEditing}
@@ -187,8 +224,8 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
                     Отказ
                   </Text>
                 </Pressable>
-
               </View>
+
             </View>
 
           ) : (
@@ -212,6 +249,14 @@ export default function WorkoutExerciseCard({ item, previousSets }) {
               >
                 <Text style={styles.editButton}>
                   Редактирай
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => handleDeleteSet(set)}
+              >
+                <Text style={styles.deleteButton}>
+                  Изтрий
                 </Text>
               </Pressable>
             </>
@@ -318,6 +363,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
     gap: 6,
+    flexWrap: 'wrap',
   },
 
   setNumber: {
@@ -332,6 +378,12 @@ const styles = StyleSheet.create({
 
   editButton: {
     color: '#2563eb',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  deleteButton: {
+    color: '#dc2626',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -412,3 +464,4 @@ const styles = StyleSheet.create({
   },
 
 });
+

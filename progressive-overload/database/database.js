@@ -43,6 +43,21 @@ export function initializeDatabase() {
         ON DELETE CASCADE
     );
   `);
+
+  const workoutColumns = db.getAllSync(
+  'PRAGMA table_info(workouts)'
+);
+
+const hasCompletedColumn = workoutColumns.some(
+  (column) => column.name === 'completed'
+);
+
+if (!hasCompletedColumn) {
+  db.execSync(`
+    ALTER TABLE workouts
+    ADD COLUMN completed INTEGER NOT NULL DEFAULT 0
+  `);
+}
 }
 
 
@@ -175,5 +190,38 @@ export function updateSet(id, reps, weight) {
      SET reps = ?, weight = ?
      WHERE id = ?`,
     [reps, weight, id]
+  );
+}
+
+export function deleteSet(id, workoutExerciseId, setNumber) {
+  db.runSync(
+    'DELETE FROM sets WHERE id = ?',
+    [id]
+  );
+
+  db.runSync(
+    `UPDATE sets
+     SET set_number = set_number - 1
+     WHERE workout_exercise_id = ?
+       AND set_number > ?`,
+    [workoutExerciseId, setNumber]
+  );
+}
+
+// Приключваме тренировка
+export function finishWorkout(workoutId) {
+  db.runSync(
+    'UPDATE workouts SET completed = 1 WHERE id = ?',
+    [workoutId]
+  );
+}
+
+// Взимаме историята на приключените тренировки
+export function getWorkoutHistory() {
+  return db.getAllSync(
+    `SELECT *
+     FROM workouts
+     WHERE completed = 1
+     ORDER BY date DESC, id DESC`
   );
 }
