@@ -9,6 +9,7 @@ import {
   FlatList,
   StyleSheet,
   Keyboard,
+  Alert,
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,6 +19,7 @@ import {
   getExercises,
   addExercise,
   updateExercise,
+  deleteExercise,
 } from '../database/database';
 
 export default function ExercisesScreen() {
@@ -76,6 +78,41 @@ export default function ExercisesScreen() {
     Keyboard.dismiss();
   }
 
+  function handleDeleteExercise(exercise) {
+    Alert.alert(
+      'Изтриване на упражнение',
+      `Сигурен ли си, че искаш да премахнеш "${exercise.name}" от каталога?`,
+      [
+        {
+          text: 'Отказ',
+          style: 'cancel',
+        },
+        {
+          text: 'Изтрий',
+          style: 'destructive',
+          onPress: () => {
+            const result = deleteExercise(exercise.id);
+
+            if (editingId === exercise.id) {
+              setEditingId(null);
+              setExerciseName('');
+              Keyboard.dismiss();
+            }
+
+            loadExercises();
+
+            if (result === 'hidden') {
+              Alert.alert(
+                'Упражнението е премахнато',
+                'То е използвано в предишна тренировка и затова е скрито от каталога. Данните в историята са запазени.'
+              );
+            }
+          },
+        },
+      ]
+    );
+  }
+
   function renderExercise({ item, index }) {
     return (
       <View style={styles.exerciseItem}>
@@ -102,16 +139,29 @@ export default function ExercisesScreen() {
           </View>
         </View>
 
-        <Pressable
-          style={styles.editButton}
-          onPress={() => startEditing(item)}
-        >
-          <MaterialCommunityIcons
-            name="pencil-outline"
-            size={20}
-            color="#A78BFA"
-          />
-        </Pressable>
+        <View style={styles.exerciseActions}>
+          <Pressable
+            style={styles.editButton}
+            onPress={() => startEditing(item)}
+          >
+            <MaterialCommunityIcons
+              name="pencil-outline"
+              size={20}
+              color="#A78BFA"
+            />
+          </Pressable>
+
+          <Pressable
+            style={styles.deleteButton}
+            onPress={() => handleDeleteExercise(item)}
+          >
+            <MaterialCommunityIcons
+              name="trash-can-outline"
+              size={20}
+              color="#F87171"
+            />
+          </Pressable>
+        </View>
       </View>
     );
   }
@@ -486,6 +536,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
+  exerciseActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginLeft: 10,
+  },
+
   editButton: {
     width: 40,
     height: 40,
@@ -493,7 +550,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(139,92,246,0.13)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 10,
+  },
+
+  deleteButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(248,113,113,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(248,113,113,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   emptyContainer: {

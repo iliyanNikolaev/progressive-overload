@@ -9,7 +9,8 @@ export function initializeDatabase() {
   db.execSync(`
     CREATE TABLE IF NOT EXISTS exercises (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL
+      name TEXT NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1
     );
 
     CREATE TABLE IF NOT EXISTS workouts (
@@ -43,6 +44,7 @@ export function initializeDatabase() {
     );
   `);
 
+  // Проверяваме дали колоната completed съществува
   const workoutColumns = db.getAllSync(
     'PRAGMA table_info(workouts)'
   );
@@ -57,12 +59,33 @@ export function initializeDatabase() {
       ADD COLUMN completed INTEGER NOT NULL DEFAULT 0
     `);
   }
+
+  // Проверяваме дали колоната is_active съществува
+  const exerciseColumns = db.getAllSync(
+    'PRAGMA table_info(exercises)'
+  );
+
+  const hasActiveColumn = exerciseColumns.some(
+    (column) => column.name === 'is_active'
+  );
+
+  // Добавяме колоната към съществуващата база
+  // Всички досегашни упражнения остават активни
+  if (!hasActiveColumn) {
+    db.execSync(`
+      ALTER TABLE exercises
+      ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1
+    `);
+  }
 }
 
-// Взимаме всички упражнения
+// Взимаме само активните упражнения от каталога
 export function getExercises() {
   return db.getAllSync(
-    'SELECT * FROM exercises ORDER BY name ASC'
+    `SELECT *
+     FROM exercises
+     WHERE is_active = 1
+     ORDER BY name ASC`
   );
 }
 
@@ -80,6 +103,43 @@ export function updateExercise(id, name) {
     'UPDATE exercises SET name = ? WHERE id = ?',
     [name, id]
   );
+}
+
+// Изтриваме упражнение от каталога
+export function deleteExercise(id) {
+  db.execSync('BEGIN TRANSACTION');
+
+  try {
+    // Проверяваме дали упражнението е използвано
+    const usage = db.getFirstSync(
+      `SELECT COUNT(*) AS total
+       FROM workout_exercises
+       WHERE exercise_id = ?`,
+      [id]
+    );
+
+    if (usage.total > 0) {
+      // Ако е използвано, само го скриваме от каталога
+      // Историческите тренировки остават непокътнати
+      db.runSync(
+        'UPDATE exercises SET is_active = 0 WHERE id = ?',
+        [id]
+      );
+    } else {
+      // Ако не е използвано, го изтриваме напълно
+      db.runSync(
+        'DELETE FROM exercises WHERE id = ?',
+        [id]
+      );
+    }
+
+    db.execSync('COMMIT');
+
+    return usage.total > 0 ? 'hidden' : 'deleted';
+  } catch (error) {
+    db.execSync('ROLLBACK');
+    throw error;
+  }
 }
 
 // Създаваме нова празна тренировка
@@ -138,8 +198,7 @@ export function deleteWorkout(workoutId) {
   db.execSync('BEGIN TRANSACTION');
 
   try {
-    // Намираме всички упражнения от тренировката
-    // и изтриваме техните серии
+    // Изтриваме сериите към упражненията от тренировката
     db.runSync(
       `DELETE FROM sets
        WHERE workout_exercise_id IN (
