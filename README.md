@@ -176,19 +176,19 @@ Progressive Overload е мобилно приложение, създадено 
 
 <table>
   <tr>
-    <td><img src="screenshots/IMG_3788.png" width="100%"></td>
-    <td><img src="screenshots/IMG_3792.png" width="100%"></td>
-    <td><img src="screenshots/IMG_3790.png" width="100%"></td>
+    <td><img src="screenshots/IMG_3788.PNG" width="100%"></td>
+    <td><img src="screenshots/IMG_3792.PNG" width="100%"></td>
+    <td><img src="screenshots/IMG_3790.PNG" width="100%"></td>
   </tr>
   <tr>
-    <td><img src="screenshots/IMG_3789.png" width="100%"></td>
-    <td><img src="screenshots/IMG_3791.png" width="100%"></td>
-    <td><img src="screenshots/IMG_3796.png" width="100%"></td>
+    <td><img src="screenshots/IMG_3789.PNG" width="100%"></td>
+    <td><img src="screenshots/IMG_3791.PNG" width="100%"></td>
+    <td><img src="screenshots/IMG_3796.PNG" width="100%"></td>
   </tr>
   <tr>
-    <td><img src="screenshots/IMG_3793.png" width="100%"></td>
-    <td><img src="screenshots/IMG_3794.png" width="100%"></td>
-    <td><img src="screenshots/IMG_3795.png" width="100%"></td>
+    <td><img src="screenshots/IMG_3793.PNG" width="100%"></td>
+    <td><img src="screenshots/IMG_3794.PNG" width="100%"></td>
+    <td><img src="screenshots/IMG_3795.PNG" width="100%"></td>
   </tr>
 </table>
 
