@@ -11,6 +11,9 @@ import {
 
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
 import {
   getExercises,
   getWorkoutExercises,
@@ -119,6 +122,13 @@ export default function WorkoutScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={['#080B16', '#0B1020', '#080B16']}
+        style={StyleSheet.absoluteFill}
+      />
+
+      <View style={styles.topGlow} />
+
       <KeyboardAwareScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -130,29 +140,91 @@ export default function WorkoutScreen({ route, navigation }) {
         keyboardOpeningTime={0}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Текуща тренировка</Text>
+        <View style={styles.header}>
+          <Text style={styles.eyebrow}>
+            TRAINING SESSION
+          </Text>
+
+          <Text style={styles.title}>
+            Текуща тренировка
+          </Text>
+
+          <Text style={styles.subtitle}>
+            Записвай сериите и следи прогреса си
+          </Text>
+        </View>
 
         <Pressable
-          style={styles.addExerciseButton}
+          style={({ pressed }) => [
+            styles.addButton,
+            pressed && styles.buttonPressed,
+          ]}
           onPress={() => setShowExerciseList(!showExerciseList)}
         >
-          <Text style={styles.addExerciseButtonText}>
-            {showExerciseList
-              ? 'Затвори списъка'
-              : '+ Добави упражнение'}
-          </Text>
+          <LinearGradient
+            colors={['#8B5CF6', '#6366F1', '#3B82F6']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.addButtonGradient}
+          >
+            <MaterialCommunityIcons
+              name={
+                showExerciseList
+                  ? 'close-circle-outline'
+                  : 'plus-circle-outline'
+              }
+              size={23}
+              color="#FFFFFF"
+            />
+
+            <Text style={styles.addButtonText}>
+              {showExerciseList
+                ? 'Затвори списъка'
+                : 'Добави упражнение'}
+            </Text>
+
+            <MaterialCommunityIcons
+              name={showExerciseList ? 'chevron-up' : 'chevron-down'}
+              size={21}
+              color="#FFFFFF"
+            />
+          </LinearGradient>
         </Pressable>
 
         {showExerciseList && (
           <View style={styles.exerciseList}>
-            <Text style={styles.sectionTitle}>
-              Избери упражнение
-            </Text>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIcon}>
+                <MaterialCommunityIcons
+                  name="dumbbell"
+                  size={20}
+                  color="#A78BFA"
+                />
+              </View>
+
+              <View>
+                <Text style={styles.sectionTitle}>
+                  Избери упражнение
+                </Text>
+
+                <Text style={styles.sectionSubtitle}>
+                  Добави го към текущата тренировка
+                </Text>
+              </View>
+            </View>
 
             {exercises.length === 0 ? (
-              <Text style={styles.emptyText}>
-                Все още нямаш добавени упражнения в каталога.
-              </Text>
+              <View style={styles.listEmpty}>
+                <MaterialCommunityIcons
+                  name="clipboard-text-outline"
+                  size={30}
+                  color="#737D96"
+                />
+
+                <Text style={styles.emptyText}>
+                  Все още нямаш упражнения в каталога.
+                </Text>
+              </View>
             ) : (
               exercises.map((exercise) => {
                 const alreadyAdded = workoutExercises.some(
@@ -169,14 +241,38 @@ export default function WorkoutScreen({ route, navigation }) {
                     onPress={() => handleAddExercise(exercise)}
                     disabled={alreadyAdded}
                   >
-                    <Text style={styles.exerciseOptionText}>
-                      {exercise.name}
-                    </Text>
+                    <View style={styles.exerciseOptionLeft}>
+                      <View style={styles.exerciseOptionIcon}>
+                        <MaterialCommunityIcons
+                          name="dumbbell"
+                          size={17}
+                          color={alreadyAdded ? '#64748B' : '#A78BFA'}
+                        />
+                      </View>
 
-                    {alreadyAdded && (
-                      <Text style={styles.addedText}>
-                        Добавено
+                      <Text style={styles.exerciseOptionText}>
+                        {exercise.name}
                       </Text>
+                    </View>
+
+                    {alreadyAdded ? (
+                      <View style={styles.addedBadge}>
+                        <MaterialCommunityIcons
+                          name="check"
+                          size={14}
+                          color="#4ADE80"
+                        />
+
+                        <Text style={styles.addedText}>
+                          Добавено
+                        </Text>
+                      </View>
+                    ) : (
+                      <MaterialCommunityIcons
+                        name="plus-circle-outline"
+                        size={21}
+                        color="#A78BFA"
+                      />
                     )}
                   </Pressable>
                 );
@@ -185,22 +281,74 @@ export default function WorkoutScreen({ route, navigation }) {
           </View>
         )}
 
+        <View style={styles.workoutSectionHeader}>
+          <View>
+            <Text style={styles.workoutSectionTitle}>
+              Упражнения
+            </Text>
+
+            <Text style={styles.workoutSectionSubtitle}>
+              {workoutExercises.length} добавени
+            </Text>
+          </View>
+
+          <View style={styles.countBadge}>
+            <Text style={styles.countBadgeText}>
+              {workoutExercises.length}
+            </Text>
+          </View>
+        </View>
+
         {workoutExercises.length === 0 ? (
-          <Text style={styles.emptyText}>
-            Все още няма добавени упражнения.
-          </Text>
+          <View style={styles.emptyWorkout}>
+            <View style={styles.emptyWorkoutIcon}>
+              <MaterialCommunityIcons
+                name="dumbbell"
+                size={35}
+                color="#8B5CF6"
+              />
+            </View>
+
+            <Text style={styles.emptyWorkoutTitle}>
+              Тренировката е празна
+            </Text>
+
+            <Text style={styles.emptyWorkoutDescription}>
+              Добави упражнения, за да започнеш да записваш сериите си.
+            </Text>
+          </View>
         ) : (
           workoutExercises.map(renderWorkoutExercise)
         )}
 
         <Pressable
-          style={styles.finishButton}
+          style={({ pressed }) => [
+            styles.finishButton,
+            pressed && styles.buttonPressed,
+          ]}
           onPress={handleFinishWorkout}
         >
-          <Text style={styles.finishButtonText}>
-            Приключи тренировка
-          </Text>
+          <LinearGradient
+            colors={['#16A34A', '#15803D']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.finishButtonGradient}
+          >
+            <MaterialCommunityIcons
+              name="check-circle-outline"
+              size={22}
+              color="#FFFFFF"
+            />
+
+            <Text style={styles.finishButtonText}>
+              Приключи тренировка
+            </Text>
+          </LinearGradient>
         </Pressable>
+
+        <Text style={styles.finishHint}>
+          Запиши поне една серия, за да приключиш тренировката.
+        </Text>
       </KeyboardAwareScrollView>
     </View>
   );
@@ -209,7 +357,18 @@ export default function WorkoutScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#080B16',
+  },
+
+  topGlow: {
+    position: 'absolute',
+    top: -130,
+    right: -110,
+    width: 290,
+    height: 290,
+    borderRadius: 145,
+    backgroundColor: '#312E81',
+    opacity: 0.17,
   },
 
   scrollView: {
@@ -217,87 +376,260 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
+    paddingHorizontal: 17,
+    paddingTop: 18,
+    paddingBottom: 125,
+  },
+
+  header: {
+    marginBottom: 23,
+  },
+
+  eyebrow: {
+    color: '#8B5CF6',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginBottom: 8,
   },
 
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#111827',
+    color: '#F8FAFC',
+    fontSize: 27,
+    fontWeight: '800',
   },
 
-  addExerciseButton: {
-    backgroundColor: '#2563eb',
-    padding: 14,
-    borderRadius: 10,
+  subtitle: {
+    color: '#858DA5',
+    fontSize: 12,
+    marginTop: 7,
+  },
+
+  addButton: {
+    borderRadius: 15,
+    overflow: 'hidden',
+    marginBottom: 17,
+  },
+
+  addButtonGradient: {
+    minHeight: 54,
+    paddingHorizontal: 17,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'center',
+    gap: 10,
   },
 
-  addExerciseButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    flex: 1,
+  },
+
+  buttonPressed: {
+    opacity: 0.82,
+    transform: [{ scale: 0.985 }],
   },
 
   exerciseList: {
-    backgroundColor: '#ffffff',
-    padding: 14,
-    borderRadius: 10,
-    marginBottom: 16,
+    backgroundColor: 'rgba(20, 26, 46, 0.95)',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.22)',
+    padding: 15,
+    marginBottom: 22,
+  },
+
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 13,
+  },
+
+  sectionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(139, 92, 246, 0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 11,
   },
 
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#111827',
+    color: '#F1F5F9',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  sectionSubtitle: {
+    color: '#858DA5',
+    fontSize: 11,
+    marginTop: 3,
   },
 
   exerciseOption: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    minHeight: 53,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(148, 163, 184, 0.10)',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 9,
+  },
+
+  exerciseOptionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+
+  exerciseOptionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: 'rgba(139, 92, 246, 0.10)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
 
   exerciseOptionText: {
-    fontSize: 15,
-    color: '#111827',
-  },
-
-  disabledExercise: {
-    opacity: 0.5,
-  },
-
-  addedText: {
-    color: '#16a34a',
-    fontSize: 12,
+    color: '#E2E8F0',
+    fontSize: 14,
     fontWeight: '600',
   },
 
-  emptyText: {
-    color: '#6b7280',
-    textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 20,
+  disabledExercise: {
+    opacity: 0.55,
   },
 
-  finishButton: {
-    backgroundColor: '#16a34a',
-    padding: 16,
-    borderRadius: 10,
+  addedBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(34, 197, 94, 0.10)',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+
+  addedText: {
+    color: '#4ADE80',
+    fontSize: 10,
+    fontWeight: '700',
+    marginLeft: 3,
+  },
+
+  listEmpty: {
+    alignItems: 'center',
+    paddingVertical: 22,
+  },
+
+  emptyText: {
+    color: '#858DA5',
+    fontSize: 12,
+    textAlign: 'center',
     marginTop: 10,
   },
 
-  finishButtonText: {
-    color: '#ffffff',
+  workoutSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+    marginTop: 5,
+  },
+
+  workoutSectionTitle: {
+    color: '#F1F5F9',
+    fontSize: 19,
+    fontWeight: '800',
+  },
+
+  workoutSectionSubtitle: {
+    color: '#858DA5',
+    fontSize: 11,
+    marginTop: 4,
+  },
+
+  countBadge: {
+    minWidth: 34,
+    height: 34,
+    paddingHorizontal: 9,
+    borderRadius: 12,
+    backgroundColor: 'rgba(139, 92, 246, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  countBadgeText: {
+    color: '#C4B5FD',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+
+  emptyWorkout: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(20, 26, 46, 0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.12)',
+    borderRadius: 18,
+    padding: 25,
+    marginBottom: 18,
+  },
+
+  emptyWorkoutIcon: {
+    width: 70,
+    height: 70,
+    borderRadius: 22,
+    backgroundColor: 'rgba(139, 92, 246, 0.13)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 15,
+  },
+
+  emptyWorkoutTitle: {
+    color: '#F1F5F9',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
+  },
+
+  emptyWorkoutDescription: {
+    color: '#858DA5',
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 19,
+    marginTop: 8,
+  },
+
+  finishButton: {
+    borderRadius: 15,
+    overflow: 'hidden',
+    marginTop: 18,
+  },
+
+  finishButtonGradient: {
+    minHeight: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingHorizontal: 15,
+  },
+
+  finishButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+
+  finishHint: {
+    color: '#667085',
+    fontSize: 10,
+    textAlign: 'center',
+    marginTop: 10,
   },
 });

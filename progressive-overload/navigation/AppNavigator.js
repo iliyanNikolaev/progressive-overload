@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 
 import HomeScreen from '../screens/HomeScreen';
 import ExercisesScreen from '../screens/ExercisesScreen';
@@ -18,21 +19,38 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#2563eb',
-        tabBarInactiveTintColor: '#9ca3af',
+
+        tabBarActiveTintColor: '#A78BFA',
+        tabBarInactiveTintColor: '#6B7280',
 
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
+          fontSize: 11,
+          fontWeight: '700',
+          marginTop: 2,
         },
 
         tabBarStyle: {
-          height: 65,
-          paddingTop: 6,
-          paddingBottom: 8,
-          backgroundColor: '#ffffff',
-          borderTopColor: '#e5e7eb',
+          position: 'absolute',
+          height: 85,
+          paddingTop: 10,
+          paddingBottom: 22,
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 0,
         },
+
+        tabBarBackground: () => (
+          <BlurView
+            tint="dark"
+            intensity={80}
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(10, 13, 27, 0.75)',
+              borderTopWidth: 1,
+              borderColor: 'rgba(255,255,255,0.08)',
+            }}
+          />
+        ),
       }}
     >
       <Tab.Screen
@@ -40,10 +58,10 @@ function MainTabs() {
         component={HomeScreen}
         options={{
           title: 'Начало',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <MaterialCommunityIcons
-              name="home-outline"
-              size={size}
+              name={focused ? 'home' : 'home-outline'}
+              size={size + 2}
               color={color}
             />
           ),
@@ -55,10 +73,10 @@ function MainTabs() {
         component={ExercisesScreen}
         options={{
           title: 'Упражнения',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <MaterialCommunityIcons
-              name="dumbbell"
-              size={size}
+              name={focused ? 'dumbbell' : 'dumbbell'}
+              size={size + 2}
               color={color}
             />
           ),
@@ -70,10 +88,10 @@ function MainTabs() {
         component={HistoryScreen}
         options={{
           title: 'История',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <MaterialCommunityIcons
-              name="history"
-              size={size}
+              name={focused ? 'history' : 'history'}
+              size={size + 2}
               color={color}
             />
           ),
@@ -85,7 +103,20 @@ function MainTabs() {
 
 export default function AppNavigator() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: '#080B16',
+        },
+        headerTintColor: '#FFFFFF',
+        headerTitleStyle: {
+          fontWeight: '700',
+        },
+        contentStyle: {
+          backgroundColor: '#080B16',
+        },
+      }}
+    >
       <Stack.Screen
         name="MainTabs"
         component={MainTabs}
@@ -95,13 +126,19 @@ export default function AppNavigator() {
       <Stack.Screen
         name="Workout"
         component={WorkoutScreen}
-        options={{ title: 'Текуща тренировка' }}
+        options={{
+          title: 'Текуща тренировка',
+          headerBackTitle: 'Назад',
+        }}
       />
 
       <Stack.Screen
         name="WorkoutDetails"
         component={WorkoutDetailsScreen}
-        options={{ title: 'Детайли на тренировката' }}
+        options={{
+          title: 'Детайли на тренировката',
+          headerBackTitle: 'Назад',
+        }}
       />
     </Stack.Navigator>
   );
