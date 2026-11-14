@@ -170,22 +170,27 @@ Progressive Overload е мобилно приложение, създадено 
 
 ---
 
-# 🎨 Дизайн и потребителски интерфейс
+# 🎨 Дизайн и потребителски интерфейс (screenshots)
 
-Приложението използва персонализирана тъмна тема, наречена **Dark Performance**.
+## 📸 Screenshots
 
-Основната идея е интерфейсът да бъде модерен, минималистичен и удобен за използване по време на тренировка.
-
-### Основни визуални характеристики
-
-- Тъмна цветова палитра.
-- Лилави и сини градиенти.
-- Полупрозрачни карти и панели.
-- Заоблени бутони и компоненти.
-- Икони от Material Community Icons.
-- Визуални ефекти с Linear Gradient и Blur.
-- Долна навигация между основните екрани.
-- Адаптирано въвеждане на данни чрез мобилна клавиатура.
+<table>
+  <tr>
+    <td><img src="screenshots/IMG_3788.png" width="100%"></td>
+    <td><img src="screenshots/IMG_3792.png" width="100%"></td>
+    <td><img src="screenshots/IMG_3790.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/IMG_3789.png" width="100%"></td>
+    <td><img src="screenshots/IMG_3791.png" width="100%"></td>
+    <td><img src="screenshots/IMG_3796.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/IMG_3793.png" width="100%"></td>
+    <td><img src="screenshots/IMG_3794.png" width="100%"></td>
+    <td><img src="screenshots/IMG_3795.png" width="100%"></td>
+  </tr>
+</table>
 
 ---
 
