@@ -7,6 +7,7 @@ import {
   FlatList,
   Pressable,
   StyleSheet,
+  Alert,
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +20,7 @@ import {
   getWorkoutHistory,
   getWorkoutExercises,
   getWorkoutSets,
+  deleteWorkout,
 } from '../database/database';
 
 export default function HistoryScreen({ navigation }) {
@@ -61,19 +63,39 @@ export default function HistoryScreen({ navigation }) {
     });
   }
 
+  function handleDeleteWorkout(workout) {
+    Alert.alert(
+      'Изтриване на тренировка',
+      `Сигурен ли си, че искаш да изтриеш Тренировка #${workouts.length - workouts.findIndex((item) => item.id === workout.id)}?\n\nВсички упражнения и серии от тази тренировка ще бъдат изтрити. Това действие не може да бъде отменено.`,
+      [
+        {
+          text: 'Отказ',
+          style: 'cancel',
+        },
+        {
+          text: 'Изтрий',
+          style: 'destructive',
+          onPress: () => {
+            try {
+              deleteWorkout(workout.id);
+              loadHistory();
+            } catch (error) {
+              console.error('Грешка при изтриване на тренировка:', error);
+
+              Alert.alert(
+                'Грешка',
+                'Тренировката не можа да бъде изтрита. Опитай отново.'
+              );
+            }
+          },
+        },
+      ]
+    );
+  }
+
   function renderWorkout({ item, index }) {
     return (
-      <Pressable
-        style={({ pressed }) => [
-          styles.workoutCard,
-          pressed && styles.workoutCardPressed,
-        ]}
-        onPress={() =>
-          navigation.navigate('WorkoutDetails', {
-            workoutId: item.id,
-          })
-        }
-      >
+      <View style={styles.workoutCard}>
         <LinearGradient
           colors={['#171B32', '#101426', '#0D1120']}
           start={{ x: 0, y: 0 }}
@@ -81,7 +103,14 @@ export default function HistoryScreen({ navigation }) {
           style={styles.cardGradient}
         >
           <View style={styles.cardHeader}>
-            <View style={styles.cardTitleContainer}>
+            <Pressable
+              style={styles.cardTitleContainer}
+              onPress={() =>
+                navigation.navigate('WorkoutDetails', {
+                  workoutId: item.id,
+                })
+              }
+            >
               <View style={styles.workoutIcon}>
                 <MaterialCommunityIcons
                   name="dumbbell"
@@ -99,75 +128,100 @@ export default function HistoryScreen({ navigation }) {
                   {formatDate(item.date)}
                 </Text>
               </View>
-            </View>
+            </Pressable>
 
-            <View style={styles.completedBadge}>
-              <View style={styles.completedDot} />
-              <Text style={styles.completedLabel}>
-                Готова
-              </Text>
+            <View style={styles.headerActions}>
+              <View style={styles.completedBadge}>
+                <View style={styles.completedDot} />
+                <Text style={styles.completedLabel}>
+                  Готова
+                </Text>
+              </View>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.deleteButton,
+                  pressed && styles.deleteButtonPressed,
+                ]}
+                onPress={() => handleDeleteWorkout(item)}
+                hitSlop={8}
+              >
+                <MaterialCommunityIcons
+                  name="trash-can-outline"
+                  size={20}
+                  color="#F87171"
+                />
+              </Pressable>
             </View>
           </View>
 
-          <View style={styles.cardDivider} />
+          <Pressable
+            onPress={() =>
+              navigation.navigate('WorkoutDetails', {
+                workoutId: item.id,
+              })
+            }
+          >
+            <View style={styles.cardDivider} />
 
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <MaterialCommunityIcons
+                  name="weight-lifter"
+                  size={19}
+                  color="#A78BFA"
+                />
+
+                <Text style={styles.statValue}>
+                  {(item.exercises || []).length}
+                </Text>
+
+                <Text style={styles.statLabel}>
+                  упражнения
+                </Text>
+              </View>
+
+              <View style={styles.statSeparator} />
+
+              <View style={styles.statItem}>
+                <MaterialCommunityIcons
+                  name="repeat"
+                  size={19}
+                  color="#60A5FA"
+                />
+
+                <Text style={styles.statValue}>
+                  {item.totalSets}
+                </Text>
+
+                <Text style={styles.statLabel}>
+                  серии
+                </Text>
+              </View>
+            </View>
+
+            {item.exercises && item.exercises.length > 0 && (
+              <View style={styles.exercisePreview}>
+                <Text style={styles.exerciseNames} numberOfLines={2}>
+                  {item.exercises.map((exercise) => exercise.name).join('  ·  ')}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.cardFooter}>
+              <Text style={styles.detailsText}>
+                Виж подробности
+              </Text>
+
               <MaterialCommunityIcons
-                name="weight-lifter"
-                size={19}
+                name="arrow-right"
+                size={18}
                 color="#A78BFA"
               />
-
-              <Text style={styles.statValue}>
-                {(item.exercises || []).length}
-              </Text>
-
-              <Text style={styles.statLabel}>
-                упражнения
-              </Text>
             </View>
-
-            <View style={styles.statSeparator} />
-
-            <View style={styles.statItem}>
-              <MaterialCommunityIcons
-                name="repeat"
-                size={19}
-                color="#60A5FA"
-              />
-
-              <Text style={styles.statValue}>
-                {item.totalSets}
-              </Text>
-
-              <Text style={styles.statLabel}>
-                серии
-              </Text>
-            </View>
-          </View>
-
-          {item.exercises && item.exercises.length > 0 && (
-            <View style={styles.exercisePreview}>
-              <Text style={styles.exerciseNames} numberOfLines={2}>
-                {item.exercises.map((exercise) => exercise.name).join('  ·  ')}
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.cardFooter}>
-            <Text style={styles.detailsText}>
-              Виж подробности
-            </Text>
-
-            <MaterialCommunityIcons
-              name="arrow-right"
-              size={18}
-              color="#A78BFA"
-            />
-          </View>
+          </Pressable>
         </LinearGradient>
-      </Pressable>
+      </View>
     );
   }
 
@@ -345,11 +399,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(139, 92, 246, 0.17)',
   },
 
-  workoutCardPressed: {
-    opacity: 0.82,
-    transform: [{ scale: 0.985 }],
-  },
-
   cardGradient: {
     padding: 17,
   },
@@ -394,6 +443,12 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
 
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
   completedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -415,6 +470,22 @@ const styles = StyleSheet.create({
     color: '#4ADE80',
     fontSize: 10,
     fontWeight: '700',
+  },
+
+  deleteButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: 'rgba(248, 113, 113, 0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(248, 113, 113, 0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  deleteButtonPressed: {
+    backgroundColor: 'rgba(248, 113, 113, 0.22)',
+    transform: [{ scale: 0.92 }],
   },
 
   cardDivider: {

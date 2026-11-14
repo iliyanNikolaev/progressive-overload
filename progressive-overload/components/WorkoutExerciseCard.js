@@ -27,6 +27,7 @@ export default function WorkoutExerciseCard({
   onExerciseDeleted,
 }) {
   const [sets, setSets] = useState([]);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const [reps, setReps] = useState('');
   const [weight, setWeight] = useState('0');
@@ -176,10 +177,17 @@ export default function WorkoutExerciseCard({
     }
   }
 
+  function toggleExpanded() {
+    setIsExpanded((current) => !current);
+  }
+
   return (
     <View style={styles.card}>
-      {/* Exercise header */}
-      <View style={styles.exerciseHeader}>
+      {/* Clickable exercise header */}
+      <Pressable
+        style={styles.exerciseHeader}
+        onPress={toggleExpanded}
+      >
         <View style={styles.exerciseIcon}>
           <MaterialCommunityIcons
             name="dumbbell"
@@ -194,317 +202,321 @@ export default function WorkoutExerciseCard({
           </Text>
 
           <Text style={styles.exerciseSubtitle}>
-            {sets.length} {sets.length === 1 ? 'серия' : 'серии'} записани
+            {sets.length} записани {sets.length === 1 ? 'серия' : 'серии'}
           </Text>
         </View>
 
-        <View style={styles.exerciseBadge}>
+        <View style={styles.expandButton}>
           <MaterialCommunityIcons
-            name="check-circle-outline"
-            size={17}
-            color="#A78BFA"
+            name={isExpanded ? 'chevron-up' : 'chevron-down'}
+            size={23}
+            color="#C4B5FD"
           />
         </View>
-      </View>
+      </Pressable>
 
-      {/* Previous workout */}
-      <LinearGradient
-        colors={['#171A32', '#111426']}
-        style={styles.previousContainer}
-      >
-        <View style={styles.previousHeader}>
-          <MaterialCommunityIcons
-            name="history"
-            size={18}
-            color="#A78BFA"
-          />
+      {isExpanded && (
+        <>
+          {/* Previous workout */}
+          <LinearGradient
+            colors={['#171A32', '#111426']}
+            style={styles.previousContainer}
+          >
+            <View style={styles.previousHeader}>
+              <MaterialCommunityIcons
+                name="history"
+                size={18}
+                color="#A78BFA"
+              />
 
-          <Text style={styles.previousTitle}>
-            ПРЕДИШНА ТРЕНИРОВКА
-          </Text>
-        </View>
+              <Text style={styles.previousTitle}>
+                ПРЕДИШНА ТРЕНИРОВКА
+              </Text>
+            </View>
 
-        {previousSets.length === 0 ? (
-          <Text style={styles.previousEmpty}>
-            Все още няма предишни резултати
-          </Text>
-        ) : (
-          <View style={styles.previousSets}>
-            {previousSets.map((set) => (
-              <View
-                key={set.set_number}
-                style={styles.previousSetRow}
-              >
-                <Text style={styles.previousSetNumber}>
-                  {set.set_number}
-                </Text>
-
-                <Text style={styles.previousText}>
-                  {set.reps} повторения
-                </Text>
-
-                <Text style={styles.previousWeight}>
-                  {set.weight} кг
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
-      </LinearGradient>
-
-      {/* Current sets */}
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionTitleContainer}>
-          <View style={styles.sectionIndicator} />
-
-          <Text style={styles.sectionTitle}>
-            Текущи серии
-          </Text>
-        </View>
-
-        <Text style={styles.setCount}>
-          {sets.length} серии
-        </Text>
-      </View>
-
-      {sets.length > 0 && (
-        <View style={styles.setsTable}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderText, styles.numberColumn]}>
-              СЕРИЯ
-            </Text>
-
-            <Text style={[styles.tableHeaderText, styles.valueColumn]}>
-              ПОВТОРЕНИЯ
-            </Text>
-
-            <Text style={[styles.tableHeaderText, styles.valueColumn]}>
-              ТЕЖЕСТ
-            </Text>
-
-            <View style={styles.actionsColumn} />
-          </View>
-
-          {sets.map((set) => (
-            <View key={set.id} style={styles.savedSet}>
-              {editingSetId === set.id ? (
-                <View style={styles.editContainer}>
-                  <Text style={styles.editSetTitle}>
-                    Редакция на серия {set.set_number}
-                  </Text>
-
-                  <View style={styles.editInputRow}>
-                    <View style={styles.editInputGroup}>
-                      <Text style={styles.inputLabel}>
-                        Повторения
-                      </Text>
-
-                      <TextInput
-                        style={styles.editInput}
-                        value={editReps}
-                        onChangeText={setEditReps}
-                        keyboardType="number-pad"
-                        placeholder="10"
-                        placeholderTextColor="#64748B"
-                      />
-                    </View>
-
-                    <View style={styles.editInputGroup}>
-                      <Text style={styles.inputLabel}>
-                        Тежест (кг)
-                      </Text>
-
-                      <TextInput
-                        style={styles.editInput}
-                        value={editWeight}
-                        onChangeText={setEditWeight}
-                        onFocus={handleEditWeightFocus}
-                        keyboardType="decimal-pad"
-                        placeholder="0"
-                        placeholderTextColor="#64748B"
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.editActions}>
-                    <Pressable
-                      style={styles.saveButton}
-                      onPress={saveEditing}
-                    >
-                      <MaterialCommunityIcons
-                        name="check"
-                        size={17}
-                        color="#FFFFFF"
-                      />
-
-                      <Text style={styles.actionButtonText}>
-                        Запази
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      style={styles.cancelButton}
-                      onPress={cancelEditing}
-                    >
-                      <MaterialCommunityIcons
-                        name="close"
-                        size={17}
-                        color="#CBD5E1"
-                      />
-
-                      <Text style={styles.cancelButtonText}>
-                        Отказ
-                      </Text>
-                    </Pressable>
-                  </View>
-                </View>
-              ) : (
-                <>
-                  <View style={styles.setNumberContainer}>
-                    <Text style={styles.setNumber}>
+            {previousSets.length === 0 ? (
+              <Text style={styles.previousEmpty}>
+                Все още няма предишни резултати
+              </Text>
+            ) : (
+              <View style={styles.previousSets}>
+                {previousSets.map((set) => (
+                  <View
+                    key={set.set_number}
+                    style={styles.previousSetRow}
+                  >
+                    <Text style={styles.previousSetNumber}>
                       {set.set_number}
                     </Text>
+
+                    <Text style={styles.previousText}>
+                      {set.reps} повторения
+                    </Text>
+
+                    <Text style={styles.previousWeight}>
+                      {set.weight} кг
+                    </Text>
                   </View>
+                ))}
+              </View>
+            )}
+          </LinearGradient>
 
-                  <Text style={styles.savedSetText}>
-                    {set.reps}
-                  </Text>
+          {/* Current sets */}
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <View style={styles.sectionIndicator} />
 
-                  <Text style={styles.savedWeightText}>
-                    {set.weight} кг
-                  </Text>
-
-                  <View style={styles.setActions}>
-                    <Pressable
-                      style={styles.iconButton}
-                      onPress={() => startEditing(set)}
-                      hitSlop={8}
-                    >
-                      <MaterialCommunityIcons
-                        name="pencil-outline"
-                        size={19}
-                        color="#A78BFA"
-                      />
-                    </Pressable>
-
-                    <Pressable
-                      style={styles.iconButton}
-                      onPress={() => handleDeleteSet(set)}
-                      hitSlop={8}
-                    >
-                      <MaterialCommunityIcons
-                        name="trash-can-outline"
-                        size={19}
-                        color="#F87171"
-                      />
-                    </Pressable>
-                  </View>
-                </>
-              )}
+              <Text style={styles.sectionTitle}>
+                Текущи серии
+              </Text>
             </View>
-          ))}
-        </View>
-      )}
 
-      {sets.length === 0 && (
-        <View style={styles.emptySets}>
-          <MaterialCommunityIcons
-            name="clipboard-list-outline"
-            size={25}
-            color="#64748B"
-          />
-
-          <Text style={styles.emptySetsText}>
-            Все още няма добавени серии
-          </Text>
-        </View>
-      )}
-
-      {/* Add set form */}
-      <View style={styles.addSetContainer}>
-        <View style={styles.addSetHeader}>
-          <MaterialCommunityIcons
-            name="plus-circle-outline"
-            size={19}
-            color="#A78BFA"
-          />
-
-          <Text style={styles.addSetTitle}>
-            Добави нова серия
-          </Text>
-        </View>
-
-        <View style={styles.inputRow}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>
-              ПОВТОРЕНИЯ
+            <Text style={styles.setCount}>
+              {sets.length} серии
             </Text>
-
-            <TextInput
-              style={styles.input}
-              value={reps}
-              onChangeText={setReps}
-              keyboardType="number-pad"
-              placeholder="10"
-              placeholderTextColor="#64748B"
-            />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>
-              ТЕЖЕСТ (КГ)
-            </Text>
+          {sets.length > 0 && (
+            <View style={styles.setsTable}>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderText, styles.numberColumn]}>
+                  СЕРИЯ
+                </Text>
 
-            <TextInput
-              style={styles.input}
-              value={weight}
-              onChangeText={setWeight}
-              onFocus={handleWeightFocus}
-              keyboardType="decimal-pad"
-              placeholder="0"
-              placeholderTextColor="#64748B"
-            />
+                <Text style={[styles.tableHeaderText, styles.valueColumn]}>
+                  ПОВТОРЕНИЯ
+                </Text>
+
+                <Text style={[styles.tableHeaderText, styles.valueColumn]}>
+                  ТЕЖЕСТ
+                </Text>
+
+                <View style={styles.actionsColumn} />
+              </View>
+
+              {sets.map((set) => (
+                <View key={set.id} style={styles.savedSet}>
+                  {editingSetId === set.id ? (
+                    <View style={styles.editContainer}>
+                      <Text style={styles.editSetTitle}>
+                        Редакция на серия {set.set_number}
+                      </Text>
+
+                      <View style={styles.editInputRow}>
+                        <View style={styles.editInputGroup}>
+                          <Text style={styles.inputLabel}>
+                            Повторения
+                          </Text>
+
+                          <TextInput
+                            style={styles.editInput}
+                            value={editReps}
+                            onChangeText={setEditReps}
+                            keyboardType="number-pad"
+                            placeholder="10"
+                            placeholderTextColor="#64748B"
+                          />
+                        </View>
+
+                        <View style={styles.editInputGroup}>
+                          <Text style={styles.inputLabel}>
+                            Тежест (кг)
+                          </Text>
+
+                          <TextInput
+                            style={styles.editInput}
+                            value={editWeight}
+                            onChangeText={setEditWeight}
+                            onFocus={handleEditWeightFocus}
+                            keyboardType="decimal-pad"
+                            placeholder="0"
+                            placeholderTextColor="#64748B"
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.editActions}>
+                        <Pressable
+                          style={styles.saveButton}
+                          onPress={saveEditing}
+                        >
+                          <MaterialCommunityIcons
+                            name="check"
+                            size={17}
+                            color="#FFFFFF"
+                          />
+
+                          <Text style={styles.actionButtonText}>
+                            Запази
+                          </Text>
+                        </Pressable>
+
+                        <Pressable
+                          style={styles.cancelButton}
+                          onPress={cancelEditing}
+                        >
+                          <MaterialCommunityIcons
+                            name="close"
+                            size={17}
+                            color="#CBD5E1"
+                          />
+
+                          <Text style={styles.cancelButtonText}>
+                            Отказ
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  ) : (
+                    <>
+                      <View style={styles.setNumberContainer}>
+                        <Text style={styles.setNumber}>
+                          {set.set_number}
+                        </Text>
+                      </View>
+
+                      <Text style={styles.savedSetText}>
+                        {set.reps}
+                      </Text>
+
+                      <Text style={styles.savedWeightText}>
+                        {set.weight} кг
+                      </Text>
+
+                      <View style={styles.setActions}>
+                        <Pressable
+                          style={styles.iconButton}
+                          onPress={() => startEditing(set)}
+                          hitSlop={8}
+                        >
+                          <MaterialCommunityIcons
+                            name="pencil-outline"
+                            size={19}
+                            color="#A78BFA"
+                          />
+                        </Pressable>
+
+                        <Pressable
+                          style={styles.iconButton}
+                          onPress={() => handleDeleteSet(set)}
+                          hitSlop={8}
+                        >
+                          <MaterialCommunityIcons
+                            name="trash-can-outline"
+                            size={19}
+                            color="#F87171"
+                          />
+                        </Pressable>
+                      </View>
+                    </>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {sets.length === 0 && (
+            <View style={styles.emptySets}>
+              <MaterialCommunityIcons
+                name="clipboard-list-outline"
+                size={25}
+                color="#64748B"
+              />
+
+              <Text style={styles.emptySetsText}>
+                Все още няма добавени серии
+              </Text>
+            </View>
+          )}
+
+          {/* Add set form */}
+          <View style={styles.addSetContainer}>
+            <View style={styles.addSetHeader}>
+              <MaterialCommunityIcons
+                name="plus-circle-outline"
+                size={19}
+                color="#A78BFA"
+              />
+
+              <Text style={styles.addSetTitle}>
+                Добави нова серия
+              </Text>
+            </View>
+
+            <View style={styles.inputRow}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>
+                  ПОВТОРЕНИЯ
+                </Text>
+
+                <TextInput
+                  style={styles.input}
+                  value={reps}
+                  onChangeText={setReps}
+                  keyboardType="number-pad"
+                  placeholder="10"
+                  placeholderTextColor="#64748B"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>
+                  ТЕЖЕСТ (КГ)
+                </Text>
+
+                <TextInput
+                  style={styles.input}
+                  value={weight}
+                  onChangeText={setWeight}
+                  onFocus={handleWeightFocus}
+                  keyboardType="decimal-pad"
+                  placeholder="0"
+                  placeholderTextColor="#64748B"
+                />
+              </View>
+            </View>
+
+            <Pressable
+              onPress={handleAddSet}
+              style={styles.addButtonWrapper}
+            >
+              <LinearGradient
+                colors={['#8B5CF6', '#6366F1', '#3B82F6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.addButton}
+              >
+                <MaterialCommunityIcons
+                  name="plus"
+                  size={21}
+                  color="#FFFFFF"
+                />
+
+                <Text style={styles.addButtonText}>
+                  Добави серия
+                </Text>
+              </LinearGradient>
+            </Pressable>
           </View>
-        </View>
 
-        <Pressable
-          onPress={handleAddSet}
-          style={styles.addButtonWrapper}
-        >
-          <LinearGradient
-            colors={['#8B5CF6', '#6366F1', '#3B82F6']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.addButton}
+          {/* Delete exercise */}
+          <Pressable
+            style={styles.deleteExerciseButton}
+            onPress={handleDeleteExercise}
           >
             <MaterialCommunityIcons
-              name="plus"
-              size={21}
-              color="#FFFFFF"
+              name="trash-can-outline"
+              size={17}
+              color="#F87171"
             />
 
-            <Text style={styles.addButtonText}>
-              Добави серия
+            <Text style={styles.deleteExerciseButtonText}>
+              Изтрий упражнението
             </Text>
-          </LinearGradient>
-        </Pressable>
-      </View>
-
-      {/* Delete exercise */}
-      <Pressable
-        style={styles.deleteExerciseButton}
-        onPress={handleDeleteExercise}
-      >
-        <MaterialCommunityIcons
-          name="trash-can-outline"
-          size={17}
-          color="#F87171"
-        />
-
-        <Text style={styles.deleteExerciseButtonText}>
-          Изтрий упражнението
-        </Text>
-      </Pressable>
+          </Pressable>
+        </>
+      )}
     </View>
   );
 }
@@ -523,7 +535,6 @@ const styles = StyleSheet.create({
   exerciseHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 18,
     gap: 12,
   },
 
@@ -554,9 +565,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  exerciseBadge: {
-    width: 32,
-    height: 32,
+  expandButton: {
+    width: 34,
+    height: 34,
     borderRadius: 11,
     backgroundColor: '#25203B',
     alignItems: 'center',
@@ -568,6 +579,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     borderWidth: 1,
     borderColor: '#292C4B',
+    marginTop: 18,
     marginBottom: 20,
   },
 

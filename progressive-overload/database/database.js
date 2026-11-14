@@ -116,16 +116,50 @@ export function deleteExerciseFromWorkout(workoutExerciseId) {
   db.execSync('BEGIN TRANSACTION');
 
   try {
-    // Първо изтриваме сериите към упражнението
     db.runSync(
       'DELETE FROM sets WHERE workout_exercise_id = ?',
       [workoutExerciseId]
     );
 
-    // След това изтриваме упражнението от тренировката
     db.runSync(
       'DELETE FROM workout_exercises WHERE id = ?',
       [workoutExerciseId]
+    );
+
+    db.execSync('COMMIT');
+  } catch (error) {
+    db.execSync('ROLLBACK');
+    throw error;
+  }
+}
+
+// Изтриваме цяла тренировка от историята
+export function deleteWorkout(workoutId) {
+  db.execSync('BEGIN TRANSACTION');
+
+  try {
+    // Намираме всички упражнения от тренировката
+    // и изтриваме техните серии
+    db.runSync(
+      `DELETE FROM sets
+       WHERE workout_exercise_id IN (
+         SELECT id
+         FROM workout_exercises
+         WHERE workout_id = ?
+       )`,
+      [workoutId]
+    );
+
+    // Изтриваме упражненията от тренировката
+    db.runSync(
+      'DELETE FROM workout_exercises WHERE workout_id = ?',
+      [workoutId]
+    );
+
+    // Изтриваме самата тренировка
+    db.runSync(
+      'DELETE FROM workouts WHERE id = ?',
+      [workoutId]
     );
 
     db.execSync('COMMIT');
@@ -273,13 +307,4 @@ export function getActiveWorkout() {
      ORDER BY id DESC
      LIMIT 1`
   );
-}
-
-// Изчистваме тестовите тренировки
-export function clearTestWorkouts() {
-  db.execSync(`
-    DELETE FROM sets;
-    DELETE FROM workout_exercises;
-    DELETE FROM workouts;
-  `);
 }
